@@ -53,25 +53,54 @@ jobs:
         with:
           cmd: install
 
+      # DEVELOPMENT
       - name: Copy repository contents via scp
+        if: ${{ steps.extract_branch.outputs.branch == 'DEVELOPMENT' }}
         uses: appleboy/scp-action@master
         env:
-          HOST: ${{ secrets.HOST }}
-          USERNAME: ${{ secrets.USERNAME }}
-          PORT: ${{ secrets.PORT }}
-          KEY: ${{ secrets.SSHKEY }}
+          HOST: ${{ secrets.DEVELOPMENT_HOST }}
+          USERNAME: ${{ secrets.DEVELOPMENT_USERNAME }}
+          PORT: ${{ secrets.DEVELOPMENT_PORT }}
+          KEY: ${{ secrets.DEVELOPMENT_SSHKEY }}
         with:
           source: "."
-          target: "/home/cyril/REPLACE_NAME-back"
+          target: "/home/cyril/dev-orgatrips-back"
 
       - name: Executing remote command
+        if: ${{ steps.extract_branch.outputs.branch == 'DEVELOPMENT' }}
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}
-          USERNAME: ${{ secrets.USERNAME }}
-          PORT: ${{ secrets.PORT }}
-          KEY: ${{ secrets.SSHKEY }}
+          host: ${{ secrets.DEVELOPMENT_HOST }}
+          USERNAME: ${{ secrets.DEVELOPMENT_USERNAME }}
+          PORT: ${{ secrets.DEVELOPMENT_PORT }}
+          KEY: ${{ secrets.DEVELOPMENT_SSHKEY }}
           script: |
-            docker ps -q --filter "name=REPLACE_NAME-back" | grep -q . && docker stop REPLACE_NAME-back
-            docker build -t REPLACE_NAME-back /home/cyril/REPLACE_NAME-back/
-            docker run --rm -d --network reverse-proxy --name REPLACE_NAME-back -t REPLACE_NAME-back
+            docker ps -q --filter "name=dev-orgatrips-back" | grep -q . && docker stop dev-orgatrips-back && docker container rm dev-orgatrips-back
+            docker build -t dev-orgatrips-back /home/cyril/dev-orgatrips-back/
+            docker run -d --network reverse-proxy --ip 172.18.0.6 --name dev-orgatrips-back -t dev-orgatrips-back
+
+      # PRODUCTION
+      - name: Copy repository contents via scp PRODUCTION
+        if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
+        uses: appleboy/scp-action@master
+        env:
+          HOST: ${{ secrets.PRODUCTION_HOST }}
+          USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
+          PORT: ${{ secrets.PRODUCTION_PORT }}
+          KEY: ${{ secrets.PRODUCTION_SSHKEY }}
+        with:
+          source: "."
+          target: "/home/debian/orgatrips-back"
+
+      - name: Executing remote command PRODUCTION
+        if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
+          PORT: ${{ secrets.PRODUCTION_PORT }}
+          KEY: ${{ secrets.PRODUCTION_SSHKEY }}
+          script: |
+            docker ps -q --filter "name=orgatrips-back" | grep -q . && docker stop orgatrips-back && docker container rm orgatrips-back
+            docker build -t orgatrips-back /home/debian/orgatrips-back/
+            docker run -d --network reverse-proxy --ip 172.18.0.8 --name orgatrips-back -t orgatrips-back

@@ -1,7 +1,7 @@
 {
-  "name": "REPLACE_NAME",
-  "version": "0.0.0-PLACEHOLDER",
-  "description": "REPLACE_NAME Node JS BackEnd - Rest API",
+  "name": "orgatrips",
+  "version": "0.0.0",
+  "description": "OrgaTrips Node JS BackEnd - Rest API",
   "main": "scripts/server.js",
   "private": true,
   "dependencies": {
