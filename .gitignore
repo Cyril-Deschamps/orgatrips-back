@@ -1,0 +1,8 @@
+node_modules
+*.log
+public/*
+storage/*
+*.xml
+apidoc
+www
+.env
