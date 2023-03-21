@@ -21,6 +21,7 @@ jobs:
           echo "APP_MAILJET_PUBLIC_KEY=${{ secrets.APP_MAILJET_PUBLIC_KEY }}" >> .env
           echo "APP_MAILJET_PRIVATE_KEY=${{ secrets.APP_MAILJET_PRIVATE_KEY }}" >> .env
           echo "APP_MAILJET_SENDER_MAIL=${{ secrets.APP_MAILJET_SENDER_MAIL }}" >> .env
+          echo "APP_KIWI_PUBLIC_KEY=${{ secrets.APP_KIWI_PUBLIC_KEY }}" >> .env
           echo "APP_CORS_ORIGIN=${{ secrets.APP_CORS_ORIGIN }}" >> .env
 
       - name: Add .env variable based on branch development
@@ -65,6 +66,7 @@ jobs:
         with:
           source: "."
           target: "/home/cyril/dev-orgatrips-back"
+          rm: true
 
       - name: Executing remote command
         if: ${{ steps.extract_branch.outputs.branch == 'DEVELOPMENT' }}
@@ -91,6 +93,7 @@ jobs:
         with:
           source: "."
           target: "/home/cyril/orgatrips-back"
+          rm: true
 
       - name: Executing remote command PRODUCTION
         if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
