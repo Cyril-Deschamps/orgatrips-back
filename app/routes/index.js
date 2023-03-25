@@ -12,12 +12,14 @@ import {
 import { contact } from "../controllers/contactController";
 import { AppError } from "../services/errorService";
 import usersRouter from "./users.js";
+import citiesRouter from "./cities.js";
 
 // ROUTES FOR OUR API
 // =============================================================================
 const router = express.Router(); // get an instance of the express Router
 
 router.use("/users", usersRouter);
+router.use("/cities", citiesRouter);
 
 /**
  * @api {get} / Test route

@@ -28,7 +28,7 @@ export default function (sequelize) {
         type: DataTypes.STRING(3),
         allowNull: false,
       },
-      kiwi_dst_popularity_score: {
+      kiwiDstPopularityScore: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
