@@ -7,7 +7,7 @@ export const searchTransportations = async ({
   budgetMax,
   childrenNumber,
   cities,
-  departureCity,
+  departureCityOrIataCode,
   endDate,
   locale,
   startDate,
@@ -15,7 +15,7 @@ export const searchTransportations = async ({
   const baseUrl = "https://api.tequila.kiwi.com/v2/search";
   const params = {
     locale,
-    fly_from: departureCity,
+    fly_from: departureCityOrIataCode,
     fly_to: cities,
     date_from: startDate,
     date_to: startDate,
@@ -40,6 +40,7 @@ export const searchTransportations = async ({
       apikey: process.env.APP_KIWI_PUBLIC_KEY,
     },
   });
+
   return response.data;
 };
 
@@ -53,7 +54,7 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
   budgetMax,
   childrenNumber,
   cities,
-  departureCity,
+  departureCityOrIataCode,
   endDate,
   locale,
   startDate,
@@ -66,7 +67,6 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
     const start = i * batchSize;
     const end = start + batchSize;
     const citiesBatch = cities.slice(start, end);
-
     promises.push(
       searchTransportations({
         cities: citiesBatch.map((destination) => destination.slug).join(","),
@@ -76,11 +76,11 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
         budgetMax:
           budgetMax * tripBudgetPercentage.transportation +
           budgetMax * tripBudgetPercentage.accomodation,
-        departureCity,
+        departureCityOrIataCode,
         adultsNumber,
         childrenNumber,
-      }).then((res) =>
-        res.data.map((destination) => ({
+      }).then((data) =>
+        data.data.map((destination) => ({
           destinationName: destination.cityTo,
           destinationCityCode: destination.cityCodeTo,
           destinationCountryCode: destination.countryTo.code,
