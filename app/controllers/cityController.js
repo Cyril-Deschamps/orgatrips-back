@@ -11,9 +11,10 @@ const { Op } = sequelize;
 const logger = loggerFactory(import.meta.url);
 
 export async function searchTrips(req, res, next) {
+  let searchParams;
   try {
-    const searchParams = {
-      departureCity: req.body.departureCity,
+    searchParams = {
+      departureCityOrIataCode: req.body.departureCity,
       locale: req.body.locale,
       startDate: new Date(req.body.dateRange.startDate),
       endDate: new Date(req.body.dateRange.endDate),
@@ -22,14 +23,14 @@ export async function searchTrips(req, res, next) {
       childrenNumber: parseInt(req.body.childrenNumber),
     };
 
-    const [cities] = await Promise.all([
-      models.City.findAll({
-        limit: 200,
-        order: [["kiwi_dst_popularity_score", "DESC"]],
-        where: { slug: { [Op.not]: searchParams.departureCity } },
-      }),
-      models.SearchTripsAnalytic.create(searchParams),
-    ]);
+    const cities = await models.City.findAll({
+      limit: 200,
+      order: [["kiwi_dst_popularity_score", "DESC"]],
+      where: {
+        slug: { [Op.not]: searchParams.departureCityOrIataCode },
+        code: { [Op.not]: searchParams.departureCityOrIataCode },
+      },
+    });
 
     let trips = await bulkSearchTransportationsAndFormatTrips({
       cities,
@@ -55,9 +56,28 @@ export async function searchTrips(req, res, next) {
       .map((trip) => addOtherBudgetAndFormatTrip(trip))
       .sort((a, b) => b.popularity - a.popularity);
 
+    models.SearchTripsAnalytic.create({ ...searchParams });
+
     return res.status(200).send(trips);
   } catch (e) {
-    logger.info(`Search destinations error : ${e}`);
+    logger.error(`Search destinations error : ${e}`);
+    try {
+      if (e.isAxiosError) {
+        if (e.response.status === 422) {
+          models.SearchTripsAnalytic.create({
+            ...searchParams,
+            error: "airport_not_compatible",
+          });
+          return res.sendStatus(422);
+        }
+      }
+    } catch (eA) {
+      logger.error(`Save error analytics error : ${eA}`);
+    }
+    models.SearchTripsAnalytic.create({
+      ...searchParams,
+      error: "maybe_timeout",
+    });
     next(e);
   }
 }

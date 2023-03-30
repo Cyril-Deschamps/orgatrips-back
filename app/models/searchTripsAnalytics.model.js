@@ -10,7 +10,7 @@ export default function (sequelize) {
 
   SearchTripsAnalytic.init(
     {
-      departureCity: {
+      departureCityOrIataCode: {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
@@ -27,8 +27,11 @@ export default function (sequelize) {
         allowNull: false,
       },
       budgetMax: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER(30),
         allowNull: false,
+      },
+      error: {
+        type: DataTypes.STRING(50),
       },
     },
     {
