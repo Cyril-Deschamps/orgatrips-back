@@ -7,6 +7,11 @@ export const project_name = "OrgaTrips";
 //secret used to encrypt pwd
 export const secret = process.env.APP_SECRET;
 
+export const tripBudgetPercentage = {
+  transportation: parseFloat(process.env.APP_TRANSPORTATION_BUDGET_PERCENTAGE),
+  accomodation: parseFloat(process.env.APP_ACCOMODATION_BUDGET_PERCENTAGE),
+};
+
 //mysql db config
 export const db = {
   host: process.env.APP_DB_HOST,
@@ -44,4 +49,4 @@ export const cors_origin = process.env.APP_CORS_ORIGIN
 
 // Documents
 export const userProfilePicMediaPath = join(storagePath, "user");
-export const messagePicMediaPath = join(storagePath, "message");
+export const cityPicMediaPath = join(storagePath, "city");
