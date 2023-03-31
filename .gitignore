@@ -2,6 +2,7 @@ node_modules
 *.log
 public/*
 storage/logs
+storage/city
 *.xml
 apidoc
 www
