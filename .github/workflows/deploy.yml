@@ -80,6 +80,8 @@ jobs:
           PORT: ${{ secrets.DEVELOPMENT_PORT }}
           KEY: ${{ secrets.DEVELOPMENT_SSHKEY }}
           script: |
+            cd /home/cyril/dev-orgatrips-back/
+            git clean -df
             docker ps -q --filter "name=dev-orgatrips-back" | grep -q . && docker stop dev-orgatrips-back && docker container rm dev-orgatrips-back
             docker build -t dev-orgatrips-back /home/cyril/dev-orgatrips-back/
             docker run -d --network reverse-proxy --ip 172.18.0.6 --name dev-orgatrips-back -t dev-orgatrips-back
@@ -106,6 +108,8 @@ jobs:
           PORT: ${{ secrets.PRODUCTION_PORT }}
           KEY: ${{ secrets.PRODUCTION_SSHKEY }}
           script: |
+            cd /home/cyril/orgatrips-back/
+            git clean -df
             docker ps -q --filter "name=orgatrips-back" | grep -q . && docker stop orgatrips-back && docker container rm orgatrips-back
             docker build -t orgatrips-back /home/cyril/orgatrips-back/
             docker run -d --network reverse-proxy --ip 172.18.0.8 --name orgatrips-back -t orgatrips-back
