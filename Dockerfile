@@ -7,5 +7,5 @@ COPY scripts ./scripts
 COPY .env ./
 COPY app ./app
 COPY package* ./
-COPY storage/* ./storage/
+COPY storage ./storage
 EXPOSE 80
