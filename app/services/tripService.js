@@ -99,6 +99,9 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
               (count, flight) => count + (flight.return === 1 ? 1 : 0),
               -1,
             ),
+            departureDate: destination.route[0].utc_departure,
+            returnDate:
+              destination.route[destination.route.length - 1].utc_arrival,
           },
         })),
       ),
@@ -156,6 +159,7 @@ export const validAccomodationBudgetAndFormatTrip = (
     formatedTrip = [
       {
         ...trip,
+        destinationPicture: correspondingCity.cityPic,
         popularity: correspondingCity.kiwiDstPopularityScore,
         Accomodation: { averagePricePerNight },
       },

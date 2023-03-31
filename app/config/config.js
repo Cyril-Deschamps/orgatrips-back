@@ -49,4 +49,4 @@ export const cors_origin = process.env.APP_CORS_ORIGIN
 
 // Documents
 export const userProfilePicMediaPath = join(storagePath, "user");
-export const messagePicMediaPath = join(storagePath, "message");
+export const cityPicMediaPath = join(storagePath, "city");

@@ -1,5 +1,12 @@
+import { join } from "path";
 import sequelize from "sequelize";
 const { DataTypes, Model } = sequelize;
+import { apiPath, back, cityPicMediaPath } from "../config/config";
+import {
+  ignoreURL,
+  modelFileDeleter,
+  modelFileWriter,
+} from "../services/fileService";
 
 export const PUBLIC_ATTRIBUTES = ["id", "name", "countryCode"];
 
@@ -56,6 +63,24 @@ export default function (sequelize) {
         type: DataTypes.FLOAT,
         allowNull: false,
       },
+      cityPic: {
+        type: DataTypes.STRING(80),
+        allowNull: true,
+        get() {
+          const cityPic = this.getDataValue("cityPic");
+          return cityPic
+            ? new URL(
+                join(
+                  apiPath,
+                  "cities",
+                  String(this.getDataValue("id")),
+                  "city-pic",
+                ),
+                back,
+              )
+            : cityPic;
+        },
+      },
     },
     {
       sequelize,
@@ -71,6 +96,21 @@ export default function (sequelize) {
       ],
     },
   );
+
+  const cityPictureWriter = modelFileWriter(
+    "cityPic",
+    cityPicMediaPath,
+    "city_picture_",
+    (mime) => {
+      if (!mime.startsWith("image"))
+        return Promise.reject(new Error("file not accepted"));
+    },
+    { quality: 75, width: 900 },
+  );
+
+  City.beforeCreate(ignoreURL("cityPic", cityPictureWriter));
+  City.beforeUpdate(ignoreURL("cityPic", cityPictureWriter));
+  City.beforeDestroy(modelFileDeleter("cityPic", cityPicMediaPath));
 
   return City;
 }

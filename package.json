@@ -33,6 +33,7 @@
     "path": "^0.12.7",
     "sequelize": "^6.6.5",
     "sequelize-cli": "^6.6.0",
+    "sharp": "^0.32.0",
     "uid-safe": "^2.1.1",
     "winston": "^3.2.1",
     "yargs": "^17.0.1"
@@ -44,6 +45,7 @@
     "user": "node --experimental-specifier-resolution=node scripts/user.js",
     "cities": "node --experimental-specifier-resolution=node scripts/cities.js",
     "airports": "node --experimental-specifier-resolution=node scripts/airports.js",
+    "cities-images": "node --experimental-specifier-resolution=node scripts/cities-images.js",
     "doc": "apidoc -i app/ -o apidoc/",
     "sync": "node --experimental-specifier-resolution=node scripts/sync.js",
     "lint-check:node": "cross-env NODE_ENV=production && eslint *.cjs app scripts --ext .js,.cjs,.mjs --no-fix --max-warnings=0",

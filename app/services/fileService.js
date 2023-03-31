@@ -4,6 +4,7 @@ import log from "../log";
 import crypto from "crypto";
 import Mime from "mime";
 import nodePath from "path";
+import sharp from "sharp";
 const logger = log(import.meta.url);
 
 export const HASH_SIZE = 40;
@@ -38,6 +39,32 @@ export function writeFile(file, path, name) {
   });
 }
 
+export function writeFileCompressed(file, path, name, compressionOptions) {
+  const data = removeBase64Header(file);
+  const filename = name + ".jpg"; //+ extension;
+  const pathName = nodePath.join(path, filename);
+  return new Promise((resolve, reject) => {
+    logger.debug("path: %o", path);
+    fs.mkdir(path, { recursive: true }, (err) => {
+      if (!err) {
+        const buf = Buffer.from(data, "base64");
+        sharp(buf)
+          .resize({ width: compressionOptions?.width || 1000 })
+          .jpeg({ quality: compressionOptions?.quality || 60, force: true })
+          .toFile(pathName, (err) => {
+            if (err) {
+              logger.error("%O", err);
+              return reject(err);
+            }
+            resolve(filename);
+          });
+      } else {
+        return reject(err);
+      }
+    });
+  });
+}
+
 /**
  *
  * @param {string|function} prefix
@@ -57,9 +84,16 @@ function getPrefixValue(prefix, instance) {
  * @param {string|function} path
  * @param {string|function} prefix
  * @param {function=} validate
+ * @param {{quality?: number, width?: number}} compressionOptions
  * @returns {function(...[*]=)}
  */
-export function modelFileWriter(attributeName, path, prefix, validate) {
+export function modelFileWriter(
+  attributeName,
+  path,
+  prefix,
+  validate,
+  compressionOptions,
+) {
   return (instance, options) => {
     if (!instance.changed(attributeName)) return;
     const filename = instance._previousDataValues[attributeName];
@@ -81,7 +115,7 @@ export function modelFileWriter(attributeName, path, prefix, validate) {
         const name = getPrefixValue(prefix, instance) + hash.read();
 
         if (filename && filename !== name) {
-          instance.constructor
+          await instance.constructor
             .findAll({
               where: {
                 [attributeName]: filename,
@@ -105,10 +139,21 @@ export function modelFileWriter(attributeName, path, prefix, validate) {
                 const p = nodePath.join(currentPath, filename);
                 logger.info("Deleting : %s", p);
                 fs.unlink(p, (err) => {
-                  logger.error("%O", err);
+                  if (err) logger.error("%O", err);
                 });
               }
             });
+        }
+        if (compressionOptions) {
+          return writeFileCompressed(
+            file,
+            typeof path === "function" ? path(instance) : path,
+            name,
+            compressionOptions,
+          ).then((createdName) => {
+            instance[attributeName] = createdName;
+            return Promise.resolve();
+          });
         }
 
         return writeFile(
@@ -143,7 +188,7 @@ export function modelFileWriter(attributeName, path, prefix, validate) {
             const p = nodePath.join(currentPath, filename);
             logger.info("Deleting : %s", p);
             fs.unlink(p, (err) => {
-              logger.error("%O", err);
+              if (err) logger.error("%O", err);
             });
             return Promise.resolve();
           }
