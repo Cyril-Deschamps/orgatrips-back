@@ -32,6 +32,8 @@ export const searchTransportations = async ({
     ret_from_diff_airport: false,
     max_stopovers: 2,
     curr: "USD",
+    nights_in_dst_from: 1,
+    nights_in_dst_to: 365,
   };
 
   const response = await axios.get(baseUrl, {
@@ -148,12 +150,12 @@ export const validAccomodationBudgetAndFormatTrip = (
     accomodationMinPricePerNight * nightsNumber
   ) {
     const averagePricePerNight = Math.round(
-      (accomodationMinPricePerNight +
+      (accomodationMinPricePerNight * 3 +
         Math.min(
           accomodationMaxPricePerNight,
           accomodationTotalBudgetMax / nightsNumber,
         )) /
-        2,
+        4,
     );
 
     formatedTrip = [
@@ -174,17 +176,24 @@ export const addOtherBudgetAndFormatTrip = (trip) => {
     trip.Transportation.price +
     trip.Accomodation.averagePricePerNight * trip.nightsNumber;
 
-  const maxOtherBudget = Math.min(
-    Math.round(
-      (accomodationAndTransportPrice /
-        (tripBudgetPercentage.transportation +
-          tripBudgetPercentage.accomodation)) *
-        (1 -
-          tripBudgetPercentage.transportation -
-          tripBudgetPercentage.accomodation),
-    ),
-    20 * trip.nightsNumber * trip.travelersNumber,
+  const theoricalOtherBudget = Math.round(
+    (accomodationAndTransportPrice /
+      (tripBudgetPercentage.transportation +
+        tripBudgetPercentage.accomodation)) *
+      (1 -
+        tripBudgetPercentage.transportation -
+        tripBudgetPercentage.accomodation),
   );
+
+  const hypoteticalOtherBudget =
+    process.env.APP_OTHER_BUDGET_PER_DAY *
+    trip.nightsNumber *
+    trip.travelersNumber;
+
+  const maxOtherBudget =
+    (Math.min(theoricalOtherBudget, hypoteticalOtherBudget) +
+      hypoteticalOtherBudget) /
+    2;
 
   return {
     ...trip,
