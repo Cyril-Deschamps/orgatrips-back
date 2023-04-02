@@ -35,6 +35,7 @@ jobs:
           echo "APP_FRONTEND_PUBLIC_URL=${{ secrets.DEVELOPMENT_APP_FRONTEND_PUBLIC_URL }}" >> .env
           echo "APP_TRANSPORTATION_BUDGET_PERCENTAGE=${{ secrets.DEVELOPMENT_APP_TRANSPORTATION_BUDGET_PERCENTAGE }}" >> .env
           echo "APP_ACCOMODATION_BUDGET_PERCENTAGE=${{ secrets.DEVELOPMENT_APP_ACCOMODATION_BUDGET_PERCENTAGE }}" >> .env
+          echo "APP_OTHER_BUDGET_PER_DAY=${{ secrets.DEVELOPMENT_APP_OTHER_BUDGET_PER_DAY }}" >> .env
 
       - name: Add .env variable based on branch development
         if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
@@ -47,6 +48,7 @@ jobs:
           echo "APP_FRONTEND_PUBLIC_URL=${{ secrets.PRODUCTION_APP_FRONTEND_PUBLIC_URL }}" >> .env
           echo "APP_TRANSPORTATION_BUDGET_PERCENTAGE=${{ secrets.PRODUCTION_APP_TRANSPORTATION_BUDGET_PERCENTAGE }}" >> .env
           echo "APP_ACCOMODATION_BUDGET_PERCENTAGE=${{ secrets.PRODUCTION_APP_ACCOMODATION_BUDGET_PERCENTAGE }}" >> .env
+          echo "APP_OTHER_BUDGET_PER_DAY=${{ secrets.PRODUCTION_APP_OTHER_BUDGET_PER_DAY }}" >> .env
 
       - name: Use Node.js 14.x
         uses: actions/setup-node@v3
