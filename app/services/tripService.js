@@ -82,30 +82,34 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
         adultsNumber,
         childrenNumber,
       }).then((data) =>
-        data.data.map((destination) => ({
-          destinationName: destination.cityTo,
-          destinationCityCode: destination.cityCodeTo,
-          destinationCountryCode: destination.countryTo.code,
-          nightsNumber: destination.nightsInDest,
-          travelersNumber: adultsNumber + childrenNumber,
-          Transportation: {
-            price: destination.price,
-            bookingToken: destination.booking_token,
-            inboundDuration: destination.duration.departure * 1000,
-            outboundDuration: destination.duration.return * 1000,
-            stopOverInbound: destination.route.reduce(
-              (count, flight) => count + (flight.return === 0 ? 1 : 0),
-              -1,
-            ),
-            stopOverOutbound: destination.route.reduce(
-              (count, flight) => count + (flight.return === 1 ? 1 : 0),
-              -1,
-            ),
-            departureDate: destination.route[0].utc_departure,
-            returnDate:
-              destination.route[destination.route.length - 1].utc_arrival,
-          },
-        })),
+        data.data.map((destination) => {
+          const inboundSteps = destination.route.filter(
+            (step) => step.return === 0,
+          );
+          const outboundSteps = destination.route.filter(
+            (step) => step.return === 1,
+          );
+          return {
+            destinationName: destination.cityTo,
+            destinationCityCode: destination.cityCodeTo,
+            destinationCountryCode: destination.countryTo.code,
+            nightsNumber: destination.nightsInDest,
+            travelersNumber: adultsNumber + childrenNumber,
+            Transportation: {
+              price: destination.price,
+              bookingToken: destination.booking_token,
+              inboundDuration: destination.duration.departure * 1000,
+              outboundDuration: destination.duration.return * 1000,
+              stopOverInbound: inboundSteps.length - 1,
+              stopOverOutbound: outboundSteps.length - 1,
+              departureDate: inboundSteps[0].utc_departure,
+              returnDate: outboundSteps[outboundSteps.length - 1].utc_arrival,
+              arrivalLocalDate:
+                inboundSteps[inboundSteps.length - 1].local_arrival,
+              leavingLocalDate: outboundSteps[0].local_departure,
+            },
+          };
+        }),
       ),
     );
   }
