@@ -1,6 +1,16 @@
 name: Deploy
 
-on: [push]
+on:
+  push:
+    branches:
+      - development
+      - production
+
+env:
+  DOCKER_PROJECT_NAME_DEV: dev-orgatrips-back
+  PROJECT_PATH_DEV: ${{ secrets.DEVELOPMENT_DOCKER_IMAGES_PATH }}/dev-orgatrips-back
+  DOCKER_PROJECT_NAME_PROD: orgatrips-back
+  PROJECT_PATH_PROD: ${{ secrets.PRODUCTION_DOCKER_IMAGES_PATH }}/orgatrips-back
 
 jobs:
   build:
@@ -56,62 +66,61 @@ jobs:
           node-version: "14.x"
           cache: "yarn"
 
-      - uses: borales/actions-yarn@v3.0.0
-        with:
-          cmd: install
+      - name: Install dependencies
+        run: yarn install
 
       # DEVELOPMENT
       - name: Copy repository contents via scp
         if: ${{ steps.extract_branch.outputs.branch == 'DEVELOPMENT' }}
         uses: appleboy/scp-action@master
-        env:
+        with:
           HOST: ${{ secrets.DEVELOPMENT_HOST }}
           USERNAME: ${{ secrets.DEVELOPMENT_USERNAME }}
           PORT: ${{ secrets.DEVELOPMENT_PORT }}
           KEY: ${{ secrets.DEVELOPMENT_SSHKEY }}
-        with:
           source: "."
-          target: "/home/cyril/dev-orgatrips-back"
+          target: ${{ env.PROJECT_PATH_DEV }}
 
       - name: Executing remote command
         if: ${{ steps.extract_branch.outputs.branch == 'DEVELOPMENT' }}
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DEVELOPMENT_HOST }}
+          HOST: ${{ secrets.DEVELOPMENT_HOST }}
           USERNAME: ${{ secrets.DEVELOPMENT_USERNAME }}
           PORT: ${{ secrets.DEVELOPMENT_PORT }}
           KEY: ${{ secrets.DEVELOPMENT_SSHKEY }}
+          envs: PROJECT_PATH_DEV,DOCKER_PROJECT_NAME_DEV
           script: |
-            cd /home/cyril/dev-orgatrips-back/
+            cd $PROJECT_PATH_DEV
             git clean -df
-            docker ps -q --filter "name=dev-orgatrips-back" | grep -q . && docker stop dev-orgatrips-back && docker container rm dev-orgatrips-back
-            docker build -t dev-orgatrips-back /home/cyril/dev-orgatrips-back/
-            docker run -d --network reverse-proxy --ip 172.18.0.6 --name dev-orgatrips-back -t dev-orgatrips-back
+            docker ps -q --filter "name=$DOCKER_PROJECT_NAME_DEV" | grep -q . && docker stop $DOCKER_PROJECT_NAME_DEV && docker container rm $DOCKER_PROJECT_NAME_DEV
+            docker build -t $DOCKER_PROJECT_NAME_DEV $PROJECT_PATH_DEV
+            docker run -d --network reverse-proxy --ip ${{ secrets.DEVELOPMENT_DOCKER_LOCAL_IP }} --name $DOCKER_PROJECT_NAME_DEV -t $DOCKER_PROJECT_NAME_DEV
 
       # PRODUCTION
       - name: Copy repository contents via scp PRODUCTION
         if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
         uses: appleboy/scp-action@master
-        env:
+        with:
           HOST: ${{ secrets.PRODUCTION_HOST }}
           USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
           PORT: ${{ secrets.PRODUCTION_PORT }}
           KEY: ${{ secrets.PRODUCTION_SSHKEY }}
-        with:
           source: "."
-          target: "/home/cyril/orgatrips-back"
+          target: ${{ env.PROJECT_PATH_PROD }}
 
       - name: Executing remote command PRODUCTION
         if: ${{ steps.extract_branch.outputs.branch == 'PRODUCTION' }}
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
+          HOST: ${{ secrets.PRODUCTION_HOST }}
           USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
           PORT: ${{ secrets.PRODUCTION_PORT }}
           KEY: ${{ secrets.PRODUCTION_SSHKEY }}
+          envs: PROJECT_PATH_PROD,DOCKER_PROJECT_NAME_PROD
           script: |
-            cd /home/cyril/orgatrips-back/
+            cd $PROJECT_PATH_PROD
             git clean -df
-            docker ps -q --filter "name=orgatrips-back" | grep -q . && docker stop orgatrips-back && docker container rm orgatrips-back
-            docker build -t orgatrips-back /home/cyril/orgatrips-back/
-            docker run -d --network reverse-proxy --ip 172.18.0.8 --name orgatrips-back -t orgatrips-back
+            docker ps -q --filter "name=$DOCKER_PROJECT_NAME_PROD" | grep -q . && docker stop $DOCKER_PROJECT_NAME_PROD && docker container rm $DOCKER_PROJECT_NAME_PROD
+            docker build -t $DOCKER_PROJECT_NAME_PROD $PROJECT_PATH_PROD
+            docker run -d --network reverse-proxy --ip ${{ secrets.PRODUCTION_DOCKER_LOCAL_IP }} --name $DOCKER_PROJECT_NAME_PROD -t $DOCKER_PROJECT_NAME_PROD
