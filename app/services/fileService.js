@@ -13,7 +13,7 @@ export function removeBase64Header(base64) {
   return base64.replace(/^data:\w+\/[^;]+(?:;filename=\w+\.\w+)?;base64,/, "");
 }
 
-export function writeFile(file, path, name) {
+export function writeFile(file, path, name, withThumbnail) {
   const data = removeBase64Header(file);
   const extension = Mime.getExtension(
     file.match(/^data:(?<type>\w+\/[^;]+)(?:;filename=\w+\.\w+)?;base64,.*/)
@@ -21,6 +21,9 @@ export function writeFile(file, path, name) {
   );
   const filename = name + "." + extension;
   const pathName = nodePath.join(path, filename);
+
+  const thumbnailName = name + "_thumbnail.jpg"; // + extension;
+  const pathThumbnail = nodePath.join(path, thumbnailName);
   return new Promise((resolve, reject) => {
     logger.debug("path: %o", path);
     fs.mkdir(path, { recursive: true }, (err) => {
@@ -30,7 +33,21 @@ export function writeFile(file, path, name) {
             logger.error("%O", err);
             return reject(err);
           }
-          return resolve(filename);
+          if (withThumbnail) {
+            const buf = Buffer.from(data, "base64");
+            sharp(buf)
+              .resize({ width: 800 })
+              .jpeg({ quality: 60, force: true })
+              .toFile(pathThumbnail, (err) => {
+                if (err) {
+                  logger.error("%O", err);
+                  return reject(err);
+                }
+                resolve([filename, thumbnailName]);
+              });
+          } else {
+            resolve([filename]);
+          }
         });
       } else {
         return reject(err);
@@ -39,24 +56,47 @@ export function writeFile(file, path, name) {
   });
 }
 
-export function writeFileCompressed(file, path, name, compressionOptions) {
+export function writeFileCompressed(
+  file,
+  path,
+  name,
+  compressionOptions,
+  withThumbnail,
+) {
   const data = removeBase64Header(file);
   const filename = name + ".jpg"; //+ extension;
   const pathName = nodePath.join(path, filename);
+
+  const thumbnailName = name + "_thumbnail.jpg"; // + extension;
+  const pathThumbnail = nodePath.join(path, thumbnailName);
+
   return new Promise((resolve, reject) => {
     logger.debug("path: %o", path);
     fs.mkdir(path, { recursive: true }, (err) => {
       if (!err) {
         const buf = Buffer.from(data, "base64");
         sharp(buf)
-          .resize({ width: compressionOptions?.width || 1000 })
+          .resize({ width: compressionOptions?.width || 2000 })
           .jpeg({ quality: compressionOptions?.quality || 60, force: true })
           .toFile(pathName, (err) => {
             if (err) {
               logger.error("%O", err);
               return reject(err);
             }
-            resolve(filename);
+            if (withThumbnail) {
+              sharp(buf)
+                .resize({ width: 800 })
+                .jpeg({ quality: 60, force: true })
+                .toFile(pathThumbnail, (err) => {
+                  if (err) {
+                    logger.error("%O", err);
+                    return reject(err);
+                  }
+                  resolve([filename, thumbnailName]);
+                });
+            } else {
+              resolve([filename]);
+            }
           });
       } else {
         return reject(err);
@@ -84,7 +124,8 @@ function getPrefixValue(prefix, instance) {
  * @param {string|function} path
  * @param {string|function} prefix
  * @param {function=} validate
- * @param {{quality?: number, width?: number}} compressionOptions
+ * @param {{quality?: number, width?: number}?} compressionOptions
+ * @param {boolean?} withThumbnail
  * @returns {function(...[*]=)}
  */
 export function modelFileWriter(
@@ -93,6 +134,7 @@ export function modelFileWriter(
   prefix,
   validate,
   compressionOptions,
+  withThumbnail = false,
 ) {
   return (instance, options) => {
     if (!instance.changed(attributeName)) return;
@@ -150,8 +192,10 @@ export function modelFileWriter(
             typeof path === "function" ? path(instance) : path,
             name,
             compressionOptions,
-          ).then((createdName) => {
-            instance[attributeName] = createdName;
+            withThumbnail,
+          ).then((createdNames) => {
+            instance[attributeName] = createdNames[0];
+            if (withThumbnail) instance.thumbnail = createdNames[1];
             return Promise.resolve();
           });
         }
@@ -160,8 +204,10 @@ export function modelFileWriter(
           file,
           typeof path === "function" ? path(instance) : path,
           name,
-        ).then((createdName) => {
-          instance[attributeName] = createdName;
+          withThumbnail,
+        ).then((createdNames) => {
+          instance[attributeName] = createdNames[0];
+          if (withThumbnail) instance.thumbnail = createdNames[1];
           return Promise.resolve();
         });
       });
@@ -270,8 +316,8 @@ export function ignoreURL(attributeName, callback) {
     : (instance, options) => {
         if (
           instance.changed(attributeName) &&
-          instance[attributeName] &&
-          instance[attributeName].startsWith("http")
+          instance.getDataValue(attributeName) &&
+          instance.getDataValue(attributeName).startsWith("http")
         ) {
           return ignoreAttribute(attributeName)(instance, options);
         }

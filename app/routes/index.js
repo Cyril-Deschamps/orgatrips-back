@@ -14,6 +14,7 @@ import { AppError } from "../services/errorService";
 import usersRouter from "./users.js";
 import citiesRouter from "./cities.js";
 import airportsRouter from "./airports";
+import articlesRouter from "./articles";
 
 // ROUTES FOR OUR API
 // =============================================================================
@@ -22,6 +23,7 @@ const router = express.Router(); // get an instance of the express Router
 router.use("/users", usersRouter);
 router.use("/cities", citiesRouter);
 router.use("/airports", airportsRouter);
+router.use("/articles", articlesRouter);
 
 /**
  * @api {get} / Test route

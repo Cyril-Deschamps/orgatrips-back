@@ -59,10 +59,10 @@ app.use(compression());
 app.use(
   bodyParser.urlencoded({
     extended: true,
-    limit: "5mb",
+    limit: "10mb",
   }),
 );
-app.use(bodyParser.json({ limit: "1mb" }));
+app.use(bodyParser.json({ limit: "10mb" }));
 app.use((req, res, next) => {
   if (req.query.relations) {
     req.relations = new Proxy(
@@ -90,7 +90,7 @@ app.use((error, req, res, _next) => {
   res.sendStatus(500);
 });
 
-//plug our router from routes.js to /api URI
+//plug our router from routes.js to / URI
 app.use(apiPath, router);
 
 if (app.get("env") === "development") {

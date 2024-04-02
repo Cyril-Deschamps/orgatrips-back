@@ -132,7 +132,7 @@ export const logout = function (req, res) {
   res.status(200).send("Cookie successfully deleted!");
 };
 
-// Create endpoint /api/users/:id for GET
+// Create endpoint /users/:id for GET
 export const getUserById = function (req, res) {
   logger.debug("getUserById :" + req.params.user_id);
   models.User.findByPk(req.params.user_id, {

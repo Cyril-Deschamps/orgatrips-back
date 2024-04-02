@@ -21,10 +21,11 @@ export const db = {
 };
 
 export const back = process.env.APP_BACKEND_PUBLIC_URL;
-export const apiPath = "/api";
+export const apiPath = "/";
 export const front = process.env.APP_FRONTEND_PUBLIC_URL;
 export const port = process.env.INTERNAL_PORT || 80;
 export const docPath = "doc";
+export const frontWebhookSecret = process.env.APP_FRONTEND_WEBHOOK_SECRET;
 
 export const mail = {
   mailjet_apikey_public: process.env.APP_MAILJET_PUBLIC_KEY,
@@ -50,3 +51,4 @@ export const cors_origin = process.env.APP_CORS_ORIGIN
 // Documents
 export const userProfilePicMediaPath = join(storagePath, "user");
 export const cityPicMediaPath = join(storagePath, "city");
+export const articlePicMediaPath = join(storagePath, "articles");
