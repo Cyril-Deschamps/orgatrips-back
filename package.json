@@ -19,6 +19,7 @@
     "date-fns": "^2.28.0",
     "dotenv": "^10.0.0",
     "express": "^4.13.3",
+    "express-ws": "^5.0.2",
     "fast-csv": "^4.3.6",
     "geoip-lite": "^1.4.7",
     "inquirer": "^8.2.0",
@@ -36,6 +37,7 @@
     "sharp": "^0.32.0",
     "uid-safe": "^2.1.1",
     "winston": "^3.2.1",
+    "ws": "^8.17.0",
     "yargs": "^17.0.1"
   },
   "scripts": {

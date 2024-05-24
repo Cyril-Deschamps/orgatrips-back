@@ -11,8 +11,12 @@ export const AIRPORT_TYPE = {
 
 export default function (sequelize) {
   class Airport extends Model {
-    static associate() {
-      /* Do Nothing*/
+    static associate(models) {
+      models.Airport.hasMany(models.Trip, {
+        foreignKey: {
+          name: "DepartureAirportIataCode",
+        },
+      });
     }
   }
 

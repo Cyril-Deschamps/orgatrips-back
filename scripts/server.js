@@ -4,7 +4,7 @@
 // =============================================================================
 
 // call the packages we need
-import app from "../app"; // call app
+import { app } from "../app"; // call app
 
 import {
   port,

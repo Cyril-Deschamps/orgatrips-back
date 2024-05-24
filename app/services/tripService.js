@@ -7,7 +7,7 @@ export const searchTransportations = async ({
   budgetMax,
   childrenNumber,
   cities,
-  departureCityOrIataCode,
+  departureIataCode,
   endDate,
   locale,
   startDate,
@@ -15,7 +15,7 @@ export const searchTransportations = async ({
   const baseUrl = "https://api.tequila.kiwi.com/v2/search";
   const params = {
     locale,
-    fly_from: departureCityOrIataCode,
+    fly_from: departureIataCode,
     fly_to: cities,
     date_from: startDate,
     date_to: startDate,
@@ -56,7 +56,7 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
   budgetMax,
   childrenNumber,
   cities,
-  departureCityOrIataCode,
+  departureIataCode,
   endDate,
   locale,
   startDate,
@@ -75,10 +75,11 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
         startDate: format(startDate, "yyyy-MM-dd"),
         endDate: format(endDate, "yyyy-MM-dd"),
         locale,
-        budgetMax:
+        budgetMax: Math.round(
           budgetMax * tripBudgetPercentage.transportation +
-          budgetMax * tripBudgetPercentage.accomodation,
-        departureCityOrIataCode,
+            budgetMax * tripBudgetPercentage.accomodation,
+        ),
+        departureIataCode,
         adultsNumber,
         childrenNumber,
       }).then((data) =>
@@ -89,25 +90,28 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
           const outboundSteps = destination.route.filter(
             (step) => step.return === 1,
           );
+          const city = citiesBatch.find(
+            (city) =>
+              city.code.toUpperCase() === destination.cityCodeTo.toUpperCase(),
+          );
           return {
-            destinationName: destination.cityTo,
-            destinationCityCode: destination.cityCodeTo,
-            destinationCountryCode: destination.countryTo.code,
+            // Follow trip model schema
+            DestinationCity: city,
             nightsNumber: destination.nightsInDest,
             travelersNumber: adultsNumber + childrenNumber,
-            Transportation: {
-              price: destination.price,
-              bookingToken: destination.booking_token,
-              inboundDuration: destination.duration.departure * 1000,
-              outboundDuration: destination.duration.return * 1000,
-              stopOverInbound: inboundSteps.length - 1,
-              stopOverOutbound: outboundSteps.length - 1,
-              departureDate: inboundSteps[0].utc_departure,
-              returnDate: outboundSteps[outboundSteps.length - 1].utc_arrival,
-              arrivalLocalDate:
-                inboundSteps[inboundSteps.length - 1].local_arrival,
-              leavingLocalDate: outboundSteps[0].local_departure,
-            },
+            transportationPrice: destination.price,
+            transportationBookingToken: destination.booking_token,
+            transportationInboundDuration:
+              destination.duration.departure * 1000,
+            transportationOutboundDuration: destination.duration.return * 1000,
+            transportationStopOverInbound: inboundSteps.length - 1,
+            transportationStopOverOutbound: outboundSteps.length - 1,
+            transportationDepartureDate: inboundSteps[0].utc_departure,
+            transportationReturnDate:
+              outboundSteps[outboundSteps.length - 1].utc_arrival,
+            transportationArrivalLocalDate:
+              inboundSteps[inboundSteps.length - 1].local_arrival,
+            transportationLeavingLocalDate: outboundSteps[0].local_departure,
           };
         }),
       ),
@@ -116,69 +120,56 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
 
   const formatedDestinations = await Promise.all(promises);
 
-  return formatedDestinations.flat();
+  return formatedDestinations
+    .flat()
+    .filter((trip) => trip.DestinationCity !== undefined);
 };
 
 /**
  * Valid accomodation price in destination and add price to the trip
  * @returns Returns trip with accomodation price or [] if budget not correspond.
  */
-export const validAccomodationBudgetAndFormatTrip = (
-  trip,
-  correspondingCity,
-  travelersNumber,
-  nightsNumber,
-  budgetMax,
-) => {
-  let formatedTrip = [];
-
+export const calculValidAccomodationBudget = (trip, budgetMax) => {
   // Accomodation price percentage depending on the percentage of price used by transport
   const accomodationPricePecentage =
     tripBudgetPercentage.transportation -
-    trip.Transportation.price / budgetMax +
+    trip.transportationPrice / budgetMax +
     tripBudgetPercentage.accomodation;
 
   const accomodationTotalBudgetMax = budgetMax * accomodationPricePecentage;
 
   const accomodationMinPricePerNight =
-    (travelersNumber === 1
-      ? correspondingCity.soloPricePerPersonMin
-      : correspondingCity.multiplePricePerPersonMin) * travelersNumber;
+    (trip.travelersNumber === 1
+      ? trip.DestinationCity.soloPricePerPersonMin
+      : trip.DestinationCity.multiplePricePerPersonMin) * trip.travelersNumber;
   const accomodationMaxPricePerNight =
-    (travelersNumber === 1
-      ? correspondingCity.soloPricePerPersonMax
-      : correspondingCity.multiplePricePerPersonMax) * travelersNumber;
+    (trip.travelersNumber === 1
+      ? trip.DestinationCity.soloPricePerPersonMax
+      : trip.DestinationCity.multiplePricePerPersonMax) * trip.travelersNumber;
 
   if (
     accomodationTotalBudgetMax >
-    accomodationMinPricePerNight * nightsNumber
+    accomodationMinPricePerNight * trip.nightsNumber
   ) {
     const averagePricePerNight = Math.round(
       (accomodationMinPricePerNight * 3 +
         Math.min(
           accomodationMaxPricePerNight,
-          accomodationTotalBudgetMax / nightsNumber,
+          accomodationTotalBudgetMax / trip.nightsNumber,
         )) /
         4,
     );
 
-    formatedTrip = [
-      {
-        ...trip,
-        destinationPicture: correspondingCity.cityPic,
-        popularity: correspondingCity.kiwiDstPopularityScore,
-        Accomodation: { averagePricePerNight },
-      },
-    ];
+    return averagePricePerNight;
   }
 
-  return formatedTrip;
+  return null;
 };
 
-export const addOtherBudgetAndFormatTrip = (trip) => {
+export const calculOtherBudgets = (trip) => {
   const accomodationAndTransportPrice =
-    trip.Transportation.price +
-    trip.Accomodation.averagePricePerNight * trip.nightsNumber;
+    trip.transportationPrice +
+    trip.accomodationAveragePricePerNight * trip.nightsNumber;
 
   const theoricalOtherBudget = Math.round(
     (accomodationAndTransportPrice /
@@ -200,8 +191,7 @@ export const addOtherBudgetAndFormatTrip = (trip) => {
     2;
 
   return {
-    ...trip,
-    otherSpentPrice: maxOtherBudget,
-    totalPrice: accomodationAndTransportPrice + maxOtherBudget,
+    otherSpentBudget: maxOtherBudget,
+    totalBudget: accomodationAndTransportPrice + maxOtherBudget,
   };
 };

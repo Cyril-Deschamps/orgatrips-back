@@ -10,7 +10,7 @@ export default function (sequelize) {
 
   SearchTripsAnalytic.init(
     {
-      departureCityOrIataCode: {
+      departureIataCode: {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
