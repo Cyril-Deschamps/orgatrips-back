@@ -21,7 +21,7 @@ export const db = {
 };
 
 export const back = process.env.APP_BACKEND_PUBLIC_URL;
-export const apiPath = "/";
+export const apiPath = "/api";
 export const front = process.env.APP_FRONTEND_PUBLIC_URL;
 export const port = process.env.INTERNAL_PORT || 80;
 export const docPath = "doc";
