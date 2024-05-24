@@ -92,7 +92,7 @@ export async function findAirports(req, res, next) {
 
     return res.status(200).send(airports);
   } catch (e) {
-    logger.info(`Search destinations error : ${e}`);
+    logger.info(`Search airports error : ${e}`);
     next(e);
   }
 }

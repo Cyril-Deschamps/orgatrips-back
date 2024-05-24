@@ -1,7 +1,6 @@
 import { join } from "path";
 import { articlePicMediaPath } from "../config/config";
 import { models } from "../models";
-import { reloadPaths } from "../services/nextRenderService";
 
 export async function getAllArticles(req, res, next) {
   try {
@@ -41,7 +40,6 @@ export async function createArticle(req, res, next) {
         hooks: true,
       },
     );
-    await reloadPaths("/blog");
     return res.status(200).send(article);
   } catch (e) {
     next(e);
@@ -55,7 +53,6 @@ export async function deleteArticle(req, res, next) {
       individualHooks: true,
       hooks: true,
     });
-    await reloadPaths("/blog");
     return res.sendStatus(200);
   } catch (e) {
     next(e);
@@ -78,7 +75,6 @@ export async function updateArticle(req, res, next) {
         hooks: true,
       },
     );
-    await reloadPaths("/blog");
     next();
   } catch (e) {
     next(e);

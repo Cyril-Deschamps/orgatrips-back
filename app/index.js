@@ -10,8 +10,9 @@ import { apiPath, cors_origin, docPath } from "./config/config.js";
 import router from "./routes";
 import "./models";
 import loggerFactory from "./log";
+import expressWs from "express-ws";
 
-const app = express(); // define our app using express
+export const { app, getWss } = expressWs(express());
 const logger = loggerFactory(import.meta.url);
 
 Error.stackTraceLimit = Infinity;
@@ -77,6 +78,9 @@ app.use((req, res, next) => {
   next();
 });
 
+//plug our router from routes.js to / URI
+app.use(apiPath, router());
+
 /**
  * Main error handling
  */
@@ -89,9 +93,6 @@ app.use((error, req, res, _next) => {
   }
   res.sendStatus(500);
 });
-
-//plug our router from routes.js to / URI
-app.use(apiPath, router);
 
 if (app.get("env") === "development") {
   app.use(docPath, express.static("apidoc"));

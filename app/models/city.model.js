@@ -12,8 +12,12 @@ export const PUBLIC_ATTRIBUTES = ["id", "name", "countryCode"];
 
 export default function (sequelize) {
   class City extends Model {
-    static associate() {
-      /* Do Nothing*/
+    static associate(models) {
+      models.City.hasMany(models.Trip, {
+        foreignKey: {
+          name: "DestinationCityId",
+        },
+      });
     }
   }
 

@@ -7,24 +7,28 @@ import {
   createArticle,
   accessArticlePicture,
 } from "../controllers/articleController";
+import { isAdmin, isAuthenticated } from "../controllers/userController";
 import { downloadFile } from "../services/fileService";
 
-const articlesRouter = express.Router();
+const articlesRouter = () => {
+  const articlesRouter = express.Router();
 
-articlesRouter.route("/").get(getAllArticles);
-articlesRouter.route("/:article_slug").get(getArticleBySlug);
+  articlesRouter
+    .route("/")
+    .get(getAllArticles)
+    .post(isAuthenticated, isAdmin, createArticle);
 
-articlesRouter
-  .route("/its-a-fucking-route-to-manage-article")
-  .post(createArticle);
+  articlesRouter.route("/:article_slug").get(getArticleBySlug);
 
-articlesRouter
-  .route("/its-a-fucking-route-to-manage-article/:article_slug")
-  .put(updateArticle, getArticleBySlug)
-  .delete(deleteArticle);
+  articlesRouter
+    .route("/:article_slug")
+    .put(isAuthenticated, isAdmin, updateArticle, getArticleBySlug)
+    .delete(isAuthenticated, isAdmin, deleteArticle);
 
-articlesRouter
-  .route("/:article_slug/:image_type")
-  .get(accessArticlePicture, downloadFile);
+  articlesRouter
+    .route("/:article_slug/:image_type")
+    .get(accessArticlePicture, downloadFile);
 
+  return articlesRouter;
+};
 export default articlesRouter;
