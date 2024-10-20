@@ -26,6 +26,7 @@ export const searchTransportations = async ({
     vehicle_type: "aircraft,bus,train",
     adults: adultsNumber,
     children: childrenNumber,
+    partner_market: "us",
     limit: 1000,
     one_for_city: 1,
     ret_to_diff_airport: false,
@@ -71,7 +72,7 @@ export const bulkSearchTransportationsAndFormatTrips = async ({
     const citiesBatch = cities.slice(start, end);
     promises.push(
       searchTransportations({
-        cities: citiesBatch.map((destination) => destination.slug).join(","),
+        cities: citiesBatch.map((destination) => destination.code).join(","),
         startDate: format(startDate, "yyyy-MM-dd"),
         endDate: format(endDate, "yyyy-MM-dd"),
         locale,
